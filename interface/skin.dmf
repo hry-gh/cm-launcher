@@ -7,8 +7,9 @@ window "main"
 		anchor2 = -1,-1
 		is-default = true
 		saved-params = "pos;size;is-minimized;is-maximized"
-		is-maximized = true
 		statusbar = false
+		can-resize = false
+		titlebar = false
 	elem "browser"
 		type = BROWSER
 		pos = 0,0
