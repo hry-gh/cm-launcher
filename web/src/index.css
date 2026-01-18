@@ -331,6 +331,124 @@ body {
   background-color: rgba(0, 235, 78, 0.2);
 }
 
+/* Relay Dropdown */
+.relay-dropdown {
+  position: relative;
+}
+
+.relay-dropdown-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: transparent;
+  border: 2px solid #00eb4e;
+  color: #00eb4e;
+  font-family: monospace;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.relay-dropdown-button:hover {
+  background-color: rgba(0, 235, 78, 0.2);
+}
+
+.relay-dropdown-label {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.relay-dropdown-value {
+  font-weight: bold;
+}
+
+.relay-dropdown-arrow {
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+.relay-dropdown-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 4px;
+  background-color: rgba(0, 15, 0, 0.95);
+  border: 2px solid #00eb4e;
+  box-shadow: 0 0 15px #00eb4e;
+  min-width: 180px;
+  z-index: 100;
+}
+
+.relay-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.relay-option:hover:not(.disabled) {
+  background-color: rgba(0, 235, 78, 0.2);
+}
+
+.relay-option.selected {
+  background-color: rgba(0, 235, 78, 0.15);
+}
+
+.relay-option.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.relay-option input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #00eb4e;
+  border-radius: 50%;
+  background-color: transparent;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.relay-option input[type="radio"]:checked {
+  background-color: #00eb4e;
+  box-shadow: 0 0 8px #00eb4e;
+}
+
+.relay-option input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  background-color: #1a1919;
+  border-radius: 50%;
+}
+
+.relay-option input[type="radio"]:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.relay-name {
+  color: #00eb4e;
+  flex: 1;
+}
+
+.relay-ping {
+  color: #00eb4e99;
+  font-size: 11px;
+}
+
 /* Scrollbar styling */
 .server-list::-webkit-scrollbar {
   width: 8px;

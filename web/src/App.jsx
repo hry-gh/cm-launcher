@@ -8,6 +8,71 @@ const GAME_STATES = {
   4: "Finished"
 }
 
+const RELAYS = [
+  { id: "direct", name: "Direct", host: "direct.cm-ss13.com" },
+  { id: "nyc", name: "NYC", host: "nyc.cm-ss13.com" },
+  { id: "uk", name: "UK", host: "uk.cm-ss13.com" },
+  { id: "eu-e", name: "EU East", host: "eu-e.cm-ss13.com" },
+  { id: "eu-w", name: "EU West", host: "eu-w.cm-ss13.com" },
+  { id: "aus", name: "Australia", host: "aus.cm-ss13.com" },
+  { id: "us-e", name: "US East", host: "us-e.cm-ss13.com" },
+  { id: "us-w", name: "US West", host: "us-w.cm-ss13.com" },
+  { id: "asia-se", name: "SE Asia", host: "asia-se.cm-ss13.com" },
+]
+
+const PING_PORT = 4000
+const PING_COUNT = 10
+
+function pingRelay(host) {
+  return new Promise((resolve) => {
+    const socket = new WebSocket(`wss://${host}:${PING_PORT}`)
+    const pingsSent = {}
+    const pingTimes = []
+    let resolved = false
+
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true
+        socket.close()
+        resolve(null) // timeout/failed
+      }
+    }, 5000)
+
+    socket.addEventListener('message', (event) => {
+      pingTimes.push(Date.now() - pingsSent[event.data])
+      ping(Number(event.data) + 1)
+    })
+
+    socket.addEventListener('open', () => {
+      ping(1)
+    })
+
+    socket.addEventListener('error', () => {
+      if (!resolved) {
+        resolved = true
+        clearTimeout(timeout)
+        socket.close()
+        resolve(null)
+      }
+    })
+
+    const ping = (iter) => {
+      if (iter > PING_COUNT) {
+        if (!resolved) {
+          resolved = true
+          clearTimeout(timeout)
+          socket.close()
+          const avgPing = Math.round(pingTimes.reduce((a, b) => a + b) / pingTimes.length)
+          resolve(avgPing)
+        }
+      } else {
+        pingsSent[String(iter)] = Date.now()
+        socket.send(iter)
+      }
+    }
+  })
+}
+
 function formatDuration(deciseconds) {
   if (!deciseconds) return "--:--:--"
   const totalSeconds = Math.floor(deciseconds / 10)
@@ -17,10 +82,12 @@ function formatDuration(deciseconds) {
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 }
 
-function ServerItem({ server }) {
+function ServerItem({ server, selectedRelay, relays }) {
   const handleConnect = () => {
-    // Placeholder for connect functionality
-    console.log(`Connecting to ${server.name}...`)
+    const relay = relays.find(r => r.id === selectedRelay)
+
+    const connectUrl = `${relay.host}:${server.url.split(':')[1]}`
+    BYOND.command(`connect byond://${connectUrl}`)
   }
 
   const isOnline = server.status === "available"
@@ -90,6 +157,43 @@ function App() {
   const [servers, setServers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [ckey, setCkey] = useState(window.launcherData?.ckey || null)
+  const [relays, setRelays] = useState(RELAYS.map(r => ({ ...r, ping: null, checking: true })))
+  const [selectedRelay, setSelectedRelay] = useState("direct")
+  const [relayDropdownOpen, setRelayDropdownOpen] = useState(false)
+
+  useEffect(() => {
+    const handleDataUpdate = (e) => {
+      if (e.detail.ckey !== undefined) {
+        setCkey(e.detail.ckey)
+      }
+    }
+    window.addEventListener('launcherDataUpdate', handleDataUpdate)
+    return () => window.removeEventListener('launcherDataUpdate', handleDataUpdate)
+  }, [])
+
+  useEffect(() => {
+    const checkAllRelays = async () => {
+      const results = await Promise.all(
+        RELAYS.map(async (relay) => {
+          const ping = await pingRelay(relay.host)
+          return { ...relay, ping, checking: false }
+        })
+      )
+      results.sort((a, b) => {
+        if (a.ping === null && b.ping === null) return 0
+        if (a.ping === null) return 1
+        if (b.ping === null) return -1
+        return a.ping - b.ping
+      })
+      setRelays(results)
+      const bestRelay = results.find(r => r.ping !== null)
+      if (bestRelay) {
+        setSelectedRelay(bestRelay.id)
+      }
+    }
+    checkAllRelays()
+  }, [])
 
   useEffect(() => {
     const adjustForDPI = async () => {
@@ -138,14 +242,11 @@ function App() {
 
   return (
     <>
-      {/* CRT Overlay Effect */}
       <div className="crt" />
 
       <div className="launcher">
-        {/* Titlebar */}
         <Titlebar />
 
-        {/* Main Content - Server List */}
         <main className="main-content">
           <section className="section">
             <div className="section-header">Available Servers</div>
@@ -157,24 +258,63 @@ function App() {
                 <div className="server-error">Error: {error}</div>
               )}
               {servers.map((server, index) => (
-                <ServerItem key={server.name || index} server={server} />
+                <ServerItem
+                  key={server.name || index}
+                  server={server}
+                  selectedRelay={selectedRelay}
+                  relays={relays}
+                />
               ))}
             </div>
           </section>
         </main>
 
-        {/* Footer - Account Info */}
         <footer className="section footer">
           <div className="account-info">
-            <div className="account-avatar">CM</div>
+            <div className="account-avatar">{ckey ? ckey.substring(0, 2).toUpperCase() : "??"}</div>
             <div className="account-details">
-              <div className="account-name">Placeholder_User</div>
-              <div className="account-status">BYOND Account Connected</div>
+              <div className="account-name">{ckey || "Not logged in"}</div>
+              <div className="account-status">{ckey ? "BYOND Account Connected" : "Awaiting authentication..."}</div>
             </div>
           </div>
-          <div className="footer-actions">
-            <button type="button" className="button-secondary">Settings</button>
-            <button type="button" className="button-secondary">Logout</button>
+          <div className="relay-dropdown">
+            <button
+              type="button"
+              className="relay-dropdown-button"
+              onClick={() => setRelayDropdownOpen(!relayDropdownOpen)}
+            >
+              <span className="relay-dropdown-label">Relay:</span>
+              <span className="relay-dropdown-value">
+                {relays.find(r => r.id === selectedRelay)?.name || "Select"}
+              </span>
+              <span className="relay-dropdown-arrow">{relayDropdownOpen ? "▲" : "▼"}</span>
+            </button>
+            {relayDropdownOpen && (
+              <div className="relay-dropdown-menu">
+                {relays.map((relay) => (
+                  <label
+                    key={relay.id}
+                    className={`relay-option ${selectedRelay === relay.id ? 'selected' : ''} ${relay.ping === null && !relay.checking ? 'disabled' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="relay"
+                      value={relay.id}
+                      checked={selectedRelay === relay.id}
+                      onChange={() => {
+                        setSelectedRelay(relay.id)
+                        setRelayDropdownOpen(false)
+                      }}
+                      disabled={relay.ping === null && !relay.checking}
+                    />
+                    <span className="relay-name">{relay.name}</span>
+                    <span className="relay-ping">
+                      {relay.checking ? "..." : relay.ping !== null ? `${relay.ping}ms` : "N/A"}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         </footer>
       </div>
