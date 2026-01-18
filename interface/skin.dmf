@@ -1,0 +1,18 @@
+window "main"
+	elem "main"
+		type = MAIN
+		pos = 0,0
+		size = 900x500
+		anchor1 = -1,-1
+		anchor2 = -1,-1
+		is-default = true
+		saved-params = "pos;size;is-minimized;is-maximized"
+		is-maximized = true
+		statusbar = false
+	elem "browser"
+		type = BROWSER
+		pos = 0,0
+		size = 900,500
+		anchor1 = 0,0
+		anchor2 = 100,100
+		is-visible = true
