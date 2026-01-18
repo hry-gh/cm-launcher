@@ -32,7 +32,7 @@ jobs:
       - name: Install BYOND
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://www.byond.com/download/build/516/516.1644_byond.zip" -OutFile byond.zip
+          Invoke-WebRequest -Uri "https://www.byond.com/download/build/516/516.1644_byond.zip" -OutFile byond.zip -UserAgent "cm-launcher"
           Expand-Archive -Path byond.zip -DestinationPath .
 
       - name: Compile
