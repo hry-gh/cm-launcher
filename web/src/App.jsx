@@ -34,7 +34,7 @@ function pingRelay(host) {
       if (!resolved) {
         resolved = true
         socket.close()
-        resolve(null) // timeout/failed
+        resolve(null)
       }
     }, 5000)
 
@@ -245,8 +245,7 @@ function App() {
         <Titlebar />
 
         <main className="main-content">
-          <section className="section">
-            <div className="section-header">Available Servers</div>
+          <section className="section servers-section">
             <div className="server-list">
               {loading && servers.length === 0 && (
                 <div className="server-loading">Loading servers...</div>

@@ -1,0 +1,49 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build web
+        working-directory: web
+        run: npm run build
+
+      - name: Generate launcher.dm
+        shell: pwsh
+        run: |
+          $html = Get-Content web\dist\output.html -Raw
+          "var/launcher = @(~~~)`n$html~~~`n" | Set-Content code\launcher.dm -NoNewline
+
+      - name: Install BYOND
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://www.byond.com/download/build/516/516.1644_byond.zip" -OutFile byond.zip
+          Expand-Archive -Path byond.zip -DestinationPath .
+
+      - name: Compile
+        run: byond\bin\dm.exe cm-launcher.dme
+
+      - name: Create release zip
+        run: Compress-Archive -Path cm-launcher.dmb, cm-launcher.rsc -DestinationPath cm-launcher.zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.sha }}
+          name: Build ${{ github.sha }}
+          files: cm-launcher.zip

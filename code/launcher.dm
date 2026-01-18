@@ -1,3 +1,1 @@
-var/launcher = @(~~~)
-LAUNCHER HTML HERE
-~~~
+var/launcher = ""
