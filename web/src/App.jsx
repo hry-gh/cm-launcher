@@ -83,12 +83,8 @@ function formatDuration(deciseconds) {
 }
 
 function ServerItem({ server, selectedRelay, relays }) {
-  const handleConnect = () => {
-    const relay = relays.find(r => r.id === selectedRelay)
-
-    const connectUrl = `${relay.host}:${server.url.split(':')[1]}`
-    BYOND.command(`connect byond://${connectUrl}`)
-  }
+  const relay = relays.find(r => r.id === selectedRelay)
+  const connectUrl = relay ? `byond://${relay.host}:${server.url.split(':')[1]}` : null
 
   const isOnline = server.status === "available"
   const data = server.data
@@ -116,14 +112,15 @@ function ServerItem({ server, selectedRelay, relays }) {
         <div className="player-count">
           {isOnline && data ? data.players : "--"}
         </div>
-        <button
-          type="button"
-          className="button"
-          onClick={handleConnect}
-          disabled={!isOnline}
-        >
-          Connect
-        </button>
+        {isOnline && connectUrl ? (
+          <a href={connectUrl} className="button">
+            Connect
+          </a>
+        ) : (
+          <button type="button" className="button" disabled>
+            Connect
+          </button>
+        )}
       </div>
     </div>
   )

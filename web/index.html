@@ -16,5 +16,17 @@
       }
     </script>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+		const checkLoop = () => {
+			if(!("BYOND" in window)) {
+				setTimeout(checkLoop, 10);
+				return;
+			}
+
+			BYOND.command("ready");
+		}
+
+		checkLoop();
+    </script>
   </body>
 </html>

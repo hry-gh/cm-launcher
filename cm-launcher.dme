@@ -12,5 +12,6 @@
 // END_PREFERENCES
 // BEGIN_INCLUDE
 #include "code\client.dm"
+#include "code\launcher.dm"
 #include "interface\skin.dmf"
 // END_INCLUDE
