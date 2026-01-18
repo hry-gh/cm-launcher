@@ -1,6 +1,22 @@
 import { useEffect, useState } from 'react'
 
-const GAME_STATES = {
+declare const BYOND: {
+  winset: (window: string, params: Record<string, string>) => Promise<void>
+  winget: (window: string, param: string) => Promise<{ size: { x: number; y: number } }>
+  command: (cmd: string) => void
+}
+
+declare global {
+  interface Window {
+    launcherData?: { ckey?: string }
+  }
+}
+
+interface LauncherDataUpdateEvent extends CustomEvent {
+  detail: { ckey?: string }
+}
+
+const GAME_STATES: Record<number, string> = {
   0: "Starting",
   1: "Lobby",
   2: "Setting Up",
@@ -8,7 +24,34 @@ const GAME_STATES = {
   4: "Finished"
 }
 
-const RELAYS = [
+interface Relay {
+  id: string
+  name: string
+  host: string
+}
+
+interface RelayWithPing extends Relay {
+  ping: number | null
+  checking: boolean
+}
+
+interface ServerData {
+  round_id: number
+  mode: string
+  map_name: string
+  round_duration: number
+  gamestate: number
+  players: number
+}
+
+interface Server {
+  name: string
+  url: string
+  status: string
+  data?: ServerData
+}
+
+const RELAYS: Relay[] = [
   { id: "direct", name: "Direct", host: "direct.cm-ss13.com" },
   { id: "nyc", name: "NYC", host: "nyc.cm-ss13.com" },
   { id: "uk", name: "UK", host: "uk.cm-ss13.com" },
@@ -23,11 +66,11 @@ const RELAYS = [
 const PING_PORT = 4000
 const PING_COUNT = 10
 
-function pingRelay(host) {
+function pingRelay(host: string): Promise<number | null> {
   return new Promise((resolve) => {
     const socket = new WebSocket(`wss://${host}:${PING_PORT}`)
-    const pingsSent = {}
-    const pingTimes = []
+    const pingsSent: Record<string, number> = {}
+    const pingTimes: number[] = []
     let resolved = false
 
     const timeout = setTimeout(() => {
@@ -56,7 +99,7 @@ function pingRelay(host) {
       }
     })
 
-    const ping = (iter) => {
+    const ping = (iter: number) => {
       if (iter > PING_COUNT) {
         if (!resolved) {
           resolved = true
@@ -67,13 +110,13 @@ function pingRelay(host) {
         }
       } else {
         pingsSent[String(iter)] = Date.now()
-        socket.send(iter)
+        socket.send(String(iter))
       }
     }
   })
 }
 
-function formatDuration(deciseconds) {
+function formatDuration(deciseconds: number | undefined): string {
   if (!deciseconds) return "--:--:--"
   const totalSeconds = Math.floor(deciseconds / 10)
   const hours = Math.floor(totalSeconds / 3600)
@@ -82,7 +125,13 @@ function formatDuration(deciseconds) {
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 }
 
-function ServerItem({ server, selectedRelay, relays }) {
+interface ServerItemProps {
+  server: Server
+  selectedRelay: string
+  relays: RelayWithPing[]
+}
+
+function ServerItem({ server, selectedRelay, relays }: ServerItemProps) {
   const relay = relays.find(r => r.id === selectedRelay)
   const connectUrl = relay ? `byond://${relay.host}:${server.url.split(':')[1]}` : null
 
@@ -151,18 +200,19 @@ function Titlebar() {
 }
 
 function App() {
-  const [servers, setServers] = useState([])
+  const [servers, setServers] = useState<Server[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [ckey, setCkey] = useState(window.launcherData?.ckey || null)
-  const [relays, setRelays] = useState(RELAYS.map(r => ({ ...r, ping: null, checking: true })))
+  const [error, setError] = useState<string | null>(null)
+  const [ckey, setCkey] = useState<string | null>(window.launcherData?.ckey || null)
+  const [relays, setRelays] = useState<RelayWithPing[]>(RELAYS.map(r => ({ ...r, ping: null, checking: true })))
   const [selectedRelay, setSelectedRelay] = useState("direct")
   const [relayDropdownOpen, setRelayDropdownOpen] = useState(false)
 
   useEffect(() => {
-    const handleDataUpdate = (e) => {
-      if (e.detail.ckey !== undefined) {
-        setCkey(e.detail.ckey)
+    const handleDataUpdate = (e: Event) => {
+      const event = e as LauncherDataUpdateEvent
+      if (event.detail.ckey !== undefined) {
+        setCkey(event.detail.ckey)
       }
     }
     window.addEventListener('launcherDataUpdate', handleDataUpdate)
@@ -226,7 +276,7 @@ function App() {
         setServers(data.servers || [])
         setError(null)
       } catch (err) {
-        setError(err.message)
+        setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
         setLoading(false)
       }
