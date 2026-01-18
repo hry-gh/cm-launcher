@@ -44,9 +44,14 @@ jobs:
       - name: Create release zip
         run: Compress-Archive -Path cm-launcher.dmb, cm-launcher.rsc -DestinationPath cm-launcher.zip
 
+      - name: Update latest tag
+        run: |
+          git tag -f latest
+          git push -f origin latest
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.sha }}
-          name: Build ${{ github.sha }}
+          tag_name: latest
+          name: Latest Build
           files: cm-launcher.zip
