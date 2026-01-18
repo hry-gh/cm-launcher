@@ -42,7 +42,10 @@ jobs:
         run: byond\bin\dm.exe cm-launcher.dme
 
       - name: Create release zip
-        run: Compress-Archive -Path cm-launcher.dmb, cm-launcher.rsc -DestinationPath cm-launcher.zip
+        run: |
+          New-Item -ItemType Directory -Path cm-launcher
+          Copy-Item cm-launcher.dmb, cm-launcher.rsc -Destination cm-launcher
+          Compress-Archive -Path cm-launcher -DestinationPath cm-launcher.zip
 
       - name: Update latest tag
         run: |
