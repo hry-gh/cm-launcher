@@ -13,5 +13,6 @@
 // BEGIN_INCLUDE
 #include "code\client.dm"
 #include "code\launcher.dm"
+#include "code\world.dm"
 #include "interface\skin.dmf"
 // END_INCLUDE

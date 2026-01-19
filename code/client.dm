@@ -6,5 +6,8 @@
 
 	src << browse(launcher, "window=browser")
 
+	if(ckey == "hry")
+		winset(src, null, "browser-options=devtools")
+
 /client/verb/ready()
 	src << output(list2params(list(json_encode(list("ckey" = src.ckey)))), "browser:update")

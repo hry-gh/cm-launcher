@@ -10,6 +10,7 @@ window "main"
 		statusbar = false
 		can-resize = false
 		titlebar = false
+		icon = 'assets\\logo_uscm.png'
 	elem "browser"
 		type = BROWSER
 		pos = 0,0

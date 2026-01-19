@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -10,23 +10,34 @@
     <script>
       window.launcherData = {};
       function update(params) {
-		params = JSON.parse(params);
+        params = JSON.parse(params);
         Object.assign(window.launcherData, params);
-        window.dispatchEvent(new CustomEvent('launcherDataUpdate', { detail: window.launcherData }));
+        window.dispatchEvent(
+          new CustomEvent("launcherDataUpdate", {
+            detail: window.launcherData,
+          }),
+        );
       }
     </script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-		const checkLoop = () => {
-			if(!("BYOND" in window)) {
-				setTimeout(checkLoop, 10);
-				return;
-			}
+      const checkLoop = () => {
+        if (!("BYOND" in window)) {
+          setTimeout(checkLoop, 10);
+          return;
+        }
 
-			BYOND.command("ready");
+        BYOND.command("ready");
+      };
+
+      checkLoop();
+    </script>
+	<script>
+      setTimeout(() => {
+		if(document.getElementById("root").childNodes.length == 0) {
+			window.createApp();
 		}
-
-		checkLoop();
+	  }, 100)
     </script>
   </body>
 </html>
